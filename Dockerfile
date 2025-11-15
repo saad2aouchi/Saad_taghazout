@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Spring Cloud Infrastructure
+  eureka-server:
+    image: openjdk:17-jdk-slim
+    ports:
+      - "8762:8762"
+    volumes:
+      - ./eureka-server:/app
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  config-server:
+    image: openjdk:17-jdk-slim
+    ports:
+      - "8899:8899"
+    volumes:
+      - ./config-server:/app
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
+
+  api-gateway:
+    image: openjdk:17-jdk-slim
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api-gateway:/app
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+      - config-server
+
+  # Auth Service (you'll need this for JWT)
+  auth-service:
+    image: openjdk:17-jdk-slim
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./auth-service:/app
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+      - config-server
+      - postgres
+
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: taghazout_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Flutter development (optional, for web testing)
+  flutter-web:
+    image: cirrusci/flutter:stable
+    ports:
+      - "52903:52903"
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    command: flutter run -d web-server --web-port 52903
+
+#volumes:
+#  postgres_data:
