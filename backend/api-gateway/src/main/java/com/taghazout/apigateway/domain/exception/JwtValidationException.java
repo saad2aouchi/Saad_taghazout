@@ -6,7 +6,7 @@ public class JwtValidationException extends RuntimeException {
         super(message);
     }
 
-    // You might want to add:
+
     public JwtValidationException(String message) {
         super(message);
     }
