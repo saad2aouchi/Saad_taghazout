@@ -3,7 +3,7 @@ package com.taghazout.apigateway.infrastructure.filter;
 import com.taghazout.apigateway.application.dto.AuthResponse;
 import com.taghazout.apigateway.domain.exception.JwtValidationException;
 import com.taghazout.apigateway.domain.service.JwtValidator;
-import jakarta.ws.rs.core.HttpHeaders;
+import org.springframework.http.HttpHeaders;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpStatus;
@@ -22,35 +22,61 @@ public final class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<
         super(Config.class);
         this.jwtValidator = jwtValidator;
         this.routeValidator = routeValidator;
+
+        // Debugging steps
+        System.out.println("🟢 JwtAuthenticationFilter CONSTRUCTOR CALLED - Filter is loaded!");
+
     }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            // Use method instead of field + remove negate() for clarity
-            if (!routeValidator.isSecured().test(exchange.getRequest())) {
+
+            System.out.println("🔵 STEP 1: Filter processing request: " + exchange.getRequest().getPath().value());
+
+            if (!routeValidator.isSecured(exchange.getRequest())) {
+                System.out.println("🟢 Open endpoint - skipping auth");
                 return chain.filter(exchange);
             }
 
+            System.out.println("🔴 Secured endpoint - checking auth");
+
+
+            System.out.println("🔴 STEP 4: Secured endpoint - checking authentication");
+
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+            System.out.println("🔵 STEP 5: Authorization header: " + authHeader);
+
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+                System.out.println("🔴 STEP 6: Missing or invalid Authorization header");
                 return reject(exchange, HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
             }
 
             String token = authHeader.substring(7);
+            System.out.println("🔵 STEP 7: Token extracted (first 10 chars): " +
+                    (token.length() > 10 ? token.substring(0, 10) + "..." : token));
+
             if (token.isEmpty()) {
+                System.out.println("🔴 STEP 8: Empty token");
                 return reject(exchange, HttpStatus.UNAUTHORIZED, "Empty token");
             }
+
+
+            System.out.println("🔵 STEP 9: Starting token validation...");
 
             // Move blocking operation to bounded elastic scheduler
             return Mono.fromCallable(() -> jwtValidator.validateToken(token))
                     .subscribeOn(Schedulers.boundedElastic())
+                    .publishOn(Schedulers.parallel()) // Return to parallel for non-blocking work
                     .flatMap(principal -> {
                         ServerWebExchange enriched = enrichExchange(exchange, principal);
                         return chain.filter(enriched);
                     })
                     .onErrorResume(error -> {
                         if (error instanceof JwtValidationException) {
+                            System.out.println("🔴 JWT validation failed: " + error.getMessage());
                             return reject(exchange, HttpStatus.UNAUTHORIZED, error.getMessage());
                         } else {
                             // Log internal errors but don't expose details to client
@@ -73,12 +99,27 @@ public final class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<
     }
 
     private Mono<Void> reject(ServerWebExchange exchange, HttpStatus status, String reason) {
+
+        // For Debugging purposes
+        System.out.println("🔴 REJECTING REQUEST: " + reason);
+        System.out.println("🔴 Path: " + exchange.getRequest().getPath().value());
+
+
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().add("Content-Type", "application/json");
 
-        AuthResponse authResponse = AuthResponse.of(reason,
-                exchange.getRequest().getPath().value(),
-                status.value());
+        // ✅ Use factory methods for consistent responses
+        AuthResponse authResponse;
+        if (status == HttpStatus.UNAUTHORIZED) {
+            authResponse = AuthResponse.unauthorized(exchange.getRequest().getPath().value());
+            byte[] jsonBytes = authResponse.toJsonBytes();
+
+            System.out.println("🔴 JSON Response: " + new String(jsonBytes));
+        } else if (status == HttpStatus.FORBIDDEN) {
+            authResponse = AuthResponse.forbidden(exchange.getRequest().getPath().value());
+        } else {
+            authResponse = AuthResponse.of(reason, exchange.getRequest().getPath().value(), status.value());
+        }
 
         return exchange.getResponse().writeWith(
                 Mono.just(exchange.getResponse().bufferFactory().wrap(
@@ -87,7 +128,14 @@ public final class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<
         );
     }
 
+
+
+
     public static class Config {
+
+        public Config() {}
+        public Config(Config config) {
+        }
         // Optional: Add configuration properties here if needed later
     }
 }

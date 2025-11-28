@@ -5,32 +5,42 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
+
 
 @Component
 public final class RouteValidator {
 
     private final List<String> openEndpoints;
-    private final PathMatcher pathMatcher;
+    private final PathMatcher pathMatcher = new AntPathMatcher();
 
     public RouteValidator(List<String> openEndpoints) {
         this.openEndpoints = validateAndCopy(openEndpoints);
-        this.pathMatcher = new AntPathMatcher(); // Spring's pattern matcher
+        System.out.println("🟢 RouteValidator loaded with open endpoints: " + openEndpoints);
+
     }
 
     /**
      * Encapsulated predicate - cannot be modified externally
      */
-    public Predicate<ServerHttpRequest> isSecured() {
-        return this::isSecuredRoute;
+    public boolean isSecured(ServerHttpRequest request) {
+        Objects.requireNonNull(request, "Request cannot be null ! ");
+        String path = getNormalizedPath(request);
+
+        // Early return for empty open endpoints - all routes are secured
+        if (openEndpoints.isEmpty()) {
+            return true;
+        }
+
+        boolean isOpen = openEndpoints.stream()
+                .anyMatch(endpoint -> pathMatcher.match(endpoint, path));
+        return !isOpen;
     }
 
-    /**
-     * Private implementation with proper path matching
-     */
+
     private boolean isSecuredRoute(ServerHttpRequest request) {
         Objects.requireNonNull(request, "Request cannot be null");
 
@@ -50,9 +60,34 @@ public final class RouteValidator {
      * Normalize path to prevent path traversal attacks
      */
     private String getNormalizedPath(ServerHttpRequest request) {
-        return Objects.requireNonNull(request.getURI().getPath(), "Path cannot be null")
-                .replaceAll("/+", "/") // Normalize slashes
-                .replaceAll("/$", ""); // Remove trailing slash
+        String rawPath = Objects.requireNonNull(request.getURI().getPath(), "Path cannot be null");
+
+        // First normalize multiple slashes
+        String normalizedSlashes = rawPath.replaceAll("/+", "/");
+
+        String resolvedPath;
+        try {
+            // Paths.get().normalize() resolves . and .. sequences
+            resolvedPath = Paths.get(normalizedSlashes).normalize().toString();
+
+            // Convert backslashes to forward slashes (Windows compatibility)
+            resolvedPath = resolvedPath.replace("\\", "/");
+
+            // Ensure path starts with / for web paths
+            if (!resolvedPath.startsWith("/")) {
+                resolvedPath = "/" + resolvedPath;
+            }
+        } catch (Exception e) {
+            // If path normalization fails, treat as potentially malicious - secure by default
+            return "/INVALID_PATH";
+        }
+
+        // Remove trailing slash (except for root path)
+        if (resolvedPath.length() > 1 && resolvedPath.endsWith("/")) {
+            resolvedPath = resolvedPath.substring(0, resolvedPath.length() - 1);
+        }
+
+        return resolvedPath;
     }
 
     /**
@@ -68,9 +103,8 @@ public final class RouteValidator {
                 .distinct()
                 .toList();
 
-        // Log warning if any endpoints were filtered out
         if (validated.size() != endpoints.size()) {
-            // Log: "Filtered out invalid open endpoints"
+            System.out.println("⚠️ Filtered out invalid open endpoints");
         }
 
         return Collections.unmodifiableList(validated);

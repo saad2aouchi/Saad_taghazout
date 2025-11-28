@@ -3,6 +3,8 @@ package com.taghazout.apigateway.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -30,17 +32,21 @@ public class SecurityConfig {
 
 //    SecurityWebFilterChain – reactive equivalent of SecurityFilterChain in servlet world.
 //            ServerHttpSecurity – builder for reactive security rules.*
+
+
+    /**
+     * @Order(LOWEST_PRECEDENCE) = Run LAST in filter chain.
+     * This ensures Gateway filters (JwtAuthenticationFilter) run FIRST.
+     */
+
+    @Order(Ordered.LOWEST_PRECEDENCE)
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(csrf -> csrf.disable()) // Stateless JWT – no CSRF
+                .csrf(ServerHttpSecurity.CsrfSpec::disable) // Stateless JWT
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(permittedEndpoints).permitAll()
-                        .anyExchange().authenticated() // All other routes need JWT
+                        .anyExchange().permitAll() // ✅ Let Gateway filters handle auth
                 )
-//        authorizeExchange – reactive version of authorizeRequests.
-//.permitAll() – allows traffic to /api/v1/auth/** without authentication.
-//         .authenticated() – blocks everything else unless JWT filter adds authentication context.*
                 .build();
     }
 }
