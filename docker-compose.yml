@@ -35,7 +35,7 @@ services:
     command: ./mvnw spring-boot:run
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
     depends_on:
       - eureka-server
       - config-server
@@ -51,7 +51,7 @@ services:
     command: ./mvnw spring-boot:run
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
     depends_on:
       - eureka-server
       - config-server
