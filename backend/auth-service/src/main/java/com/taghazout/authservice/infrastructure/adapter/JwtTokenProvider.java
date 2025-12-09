@@ -68,10 +68,7 @@ public class JwtTokenProvider implements TokenProviderPort {
         return generateToken(user, accessTokenExpiration);
     }
 
-    @Override
-    public String generateRefreshToken(User user) {
-        return generateToken(user, refreshTokenExpiration);
-    }
+
 
     @Override
     public String validateTokenAndGetEmail(String token) {
@@ -121,6 +118,11 @@ public class JwtTokenProvider implements TokenProviderPort {
                 .expiration(expiration)
                 .signWith(secretKey, Jwts.SIG.HS256) // Explicitly use HS256
                 .compact();
+    }
+
+    @Override
+    public String generateRefreshToken(User user) {
+        return generateToken(user, refreshTokenExpiration);
     }
 
     /**

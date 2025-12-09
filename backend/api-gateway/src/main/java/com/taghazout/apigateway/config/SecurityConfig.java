@@ -1,6 +1,5 @@
 package com.taghazout.apigateway.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -10,43 +9,41 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 /**
- * SRP: ONLY configures reactive security – no routes, no JWT logic.
- * OCP: New security rules added via new SecurityWebFilterChain beans.
- * DIP: Returns SecurityWebFilterChain abstraction.
+ * Reactive Security Configuration for API Gateway.
+ * 
+ * SOLID Principles:
+ * - SRP: ONLY configures reactive security – no routes, no JWT logic.
+ * - OCP: New security rules added via new SecurityWebFilterChain beans.
+ * - DIP: Returns SecurityWebFilterChain abstraction.
+ * 
+ * Design Decision:
+ * Spring Security permits ALL exchanges. Authentication is handled by:
+ * - JwtAuthenticationFilter: Validates JWT tokens
+ * - RouteValidator: Determines which routes require authentication
+ * 
+ * This separation keeps security configuration simple while delegating
+ * the complex JWT logic to dedicated components.
  */
-
-
 @Configuration
-//Enables reactive (non-blocking) security. This is not Spring Security MVC – it's a completely different stack for WebFlux.
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-
-//    Dependency Injection: The filter is provided by Spring (DIP). final ensures it's set once and never changed (immutability).*
-    private final String[] permittedEndpoints;
-
-//    @Value injects the array from properties. .clone() prevents external modifications (defensive programming).*
-    public SecurityConfig(@Value("${gateway.open-endpoints}") String[] permittedEndpoints) {
-        this.permittedEndpoints = permittedEndpoints.clone(); // Defensive copy
-    }
-
-//    SecurityWebFilterChain – reactive equivalent of SecurityFilterChain in servlet world.
-//            ServerHttpSecurity – builder for reactive security rules.*
-
-
     /**
-     * @Order(LOWEST_PRECEDENCE) = Run LAST in filter chain.
-     * This ensures Gateway filters (JwtAuthenticationFilter) run FIRST.
+     * Configures reactive security to permit all exchanges.
+     * 
+     * @Order(LOWEST_PRECEDENCE) ensures Gateway filters run FIRST,
+     *                           allowing JwtAuthenticationFilter to handle
+     *                           authentication.
+     * 
+     *                           CSRF is disabled for stateless JWT authentication.
      */
-
     @Order(Ordered.LOWEST_PRECEDENCE)
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable) // Stateless JWT
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .anyExchange().permitAll() // ✅ Let Gateway filters handle auth
-                )
+                        .anyExchange().permitAll())
                 .build();
     }
 }

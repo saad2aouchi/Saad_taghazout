@@ -92,11 +92,12 @@ public class CreateUserUseCase {
                 request.lastName());
         User savedUser = userRepository.save(user);
 
-        // Step 4: Generate JWT tokens
+        // Step 4: Generate JWT access token
         String accessToken = tokenProvider.generateAccessToken(savedUser);
-        String refreshTokenValue = tokenProvider.generateRefreshToken(savedUser);
 
-        // Step 5: Create and persist refresh token (7 days expiration)
+        // Step 5: Create and persist database-backed refresh token (UUID)
+        // Design: Using UUID tokens stored in DB allows immediate revocation
+        // (more secure than JWT refresh tokens which cannot be invalidated)
         RefreshToken refreshToken = new RefreshToken(savedUser, 7);
         refreshTokenRepository.save(refreshToken);
 
