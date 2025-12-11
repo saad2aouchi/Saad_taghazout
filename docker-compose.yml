@@ -79,5 +79,11 @@ services:
     working_dir: /app
     command: flutter run -d web-server --web-port 52903
 
+# Redis
+redis:
+  image: redis:7-alpine
+  ports:
+    - "6379:6379"
+
 #volumes:
 #  postgres_data:
