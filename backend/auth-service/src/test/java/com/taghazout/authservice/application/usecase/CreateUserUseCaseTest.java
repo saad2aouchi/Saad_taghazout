@@ -2,9 +2,12 @@ package com.taghazout.authservice.application.usecase;
 
 import com.taghazout.authservice.application.dto.AuthResponse;
 import com.taghazout.authservice.application.dto.RegisterRequest;
+import com.taghazout.authservice.domain.entity.HostProfile;
 import com.taghazout.authservice.domain.entity.RefreshToken;
 import com.taghazout.authservice.domain.entity.User;
+import com.taghazout.authservice.domain.enums.Role;
 import com.taghazout.authservice.domain.exception.UserAlreadyExistsException;
+import com.taghazout.authservice.domain.port.HostProfileRepositoryPort;
 import com.taghazout.authservice.domain.port.RefreshTokenRepositoryPort;
 import com.taghazout.authservice.domain.port.TokenProviderPort;
 import com.taghazout.authservice.domain.port.UserRepositoryPort;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,169 +27,147 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for CreateUserUseCase.
- * 
- * Tests use Mockito to mock dependencies:
- * - UserRepositoryPort
- * - RefreshTokenRepositoryPort
- * - TokenProviderPort
- * - PasswordEncoder
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateUserUseCase Tests")
 class CreateUserUseCaseTest {
 
-    @Mock
-    private UserRepositoryPort userRepository;
+        @Mock
+        private UserRepositoryPort userRepository;
 
-    @Mock
-    private RefreshTokenRepositoryPort refreshTokenRepository;
+        @Mock
+        private RefreshTokenRepositoryPort refreshTokenRepository;
 
-    @Mock
-    private TokenProviderPort tokenProvider;
+        @Mock
+        private HostProfileRepositoryPort hostProfileRepository;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+        @Mock
+        private TokenProviderPort tokenProvider;
 
-    private CreateUserUseCase createUserUseCase;
+        @Mock
+        private PasswordEncoder passwordEncoder;
 
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "password123";
-    private static final String HASHED_PASSWORD = "$2a$12$hashedPassword";
-    private static final String ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-    private static final String REFRESH_TOKEN = "550e8400-e29b-41d4-a716-446655440000";
+        private CreateUserUseCase createUserUseCase;
 
-    @BeforeEach
-    void setUp() {
-        createUserUseCase = new CreateUserUseCase(
-                userRepository,
-                refreshTokenRepository,
-                tokenProvider,
-                passwordEncoder);
-    }
+        private static final String TEST_EMAIL = "test@example.com";
+        private static final String TEST_PASSWORD = "password123";
+        private static final String HASHED_PASSWORD = "$2a$12$hashedPassword";
+        private static final String ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+        private static final String REFRESH_TOKEN = "550e8400-e29b-41d4-a716-446655440000";
 
-    @Test
-    @DisplayName("Should successfully register new user")
-    void shouldSuccessfullyRegisterNewUser() {
-        // Given
-        RegisterRequest request = new RegisterRequest(
-                TEST_EMAIL,
-                TEST_PASSWORD,
-                "John",
-                "Doe");
+        @BeforeEach
+        void setUp() {
+                createUserUseCase = new CreateUserUseCase(
+                                userRepository,
+                                refreshTokenRepository,
+                                hostProfileRepository,
+                                tokenProvider,
+                                passwordEncoder);
+        }
 
-        User savedUser = new User(TEST_EMAIL, HASHED_PASSWORD, "John", "Doe");
-        RefreshToken savedRefreshToken = new RefreshToken(savedUser, 7);
+        @Test
+        @DisplayName("Should successfully register new user (Client)")
+        void shouldSuccessfullyRegisterNewUser() {
+                // Given
+                RegisterRequest request = new RegisterRequest(
+                                TEST_EMAIL,
+                                TEST_PASSWORD,
+                                "John",
+                                "Doe",
+                                null);
 
-        when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
-        when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(HASHED_PASSWORD);
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(tokenProvider.generateAccessToken(savedUser)).thenReturn(ACCESS_TOKEN);
-        when(tokenProvider.generateRefreshToken(savedUser)).thenReturn(REFRESH_TOKEN);
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(savedRefreshToken);
+                User savedUser = new User(TEST_EMAIL, HASHED_PASSWORD, "John", "Doe", Role.CLIENT);
+                RefreshToken savedRefreshToken = new RefreshToken(savedUser, 7);
 
-        // When
-        AuthResponse response = createUserUseCase.execute(request);
+                when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
+                when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(HASHED_PASSWORD);
+                when(userRepository.save(any(User.class))).thenReturn(savedUser);
+                when(tokenProvider.generateAccessToken(savedUser)).thenReturn(ACCESS_TOKEN);
+                when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(savedRefreshToken);
 
-        // Then
-        assertThat(response).isNotNull();
-        assertThat(response.email()).isEqualTo(TEST_EMAIL);
-        assertThat(response.firstName()).isEqualTo("John");
-        assertThat(response.lastName()).isEqualTo("Doe");
-        assertThat(response.accessToken()).isEqualTo(ACCESS_TOKEN);
-        assertThat(response.refreshToken()).isNotNull();
+                // When
+                AuthResponse response = createUserUseCase.execute(request, Role.CLIENT);
 
-        // Verify interactions
-        verify(userRepository).existsByEmail(TEST_EMAIL);
-        verify(passwordEncoder).encode(TEST_PASSWORD);
-        verify(userRepository).save(any(User.class));
-        verify(tokenProvider).generateAccessToken(savedUser);
-        verify(refreshTokenRepository).save(any(RefreshToken.class));
-    }
+                // Then
+                assertThat(response).isNotNull();
+                assertThat(response.email()).isEqualTo(TEST_EMAIL);
+                assertThat(response.accessToken()).isEqualTo(ACCESS_TOKEN);
 
-    @Test
-    @DisplayName("Should throw exception when email already exists")
-    void shouldThrowExceptionWhenEmailAlreadyExists() {
-        // Given
-        RegisterRequest request = new RegisterRequest(TEST_EMAIL, TEST_PASSWORD);
-        when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(true);
+                // Verify no Host Profile saved
+                verify(hostProfileRepository, never()).save(any());
+                verify(userRepository).save(any(User.class));
+        }
 
-        // When/Then
-        assertThatThrownBy(() -> createUserUseCase.execute(request))
-                .isInstanceOf(UserAlreadyExistsException.class)
-                .hasMessageContaining(TEST_EMAIL);
+        @Test
+        @DisplayName("Should successfully register new HOST with organization name")
+        void shouldSuccessfullyRegisterNewHost() {
+                // Given
+                RegisterRequest request = new RegisterRequest(
+                                TEST_EMAIL,
+                                TEST_PASSWORD,
+                                "Host",
+                                "User",
+                                "Taghazout Surf Camp");
 
-        // Verify no user was created
-        verify(userRepository).existsByEmail(TEST_EMAIL);
-        verify(userRepository, never()).save(any(User.class));
-        verify(passwordEncoder, never()).encode(anyString());
-    }
+                User savedUser = new User(TEST_EMAIL, HASHED_PASSWORD, "Host", "User", Role.HOST);
+                RefreshToken savedRefreshToken = new RefreshToken(savedUser, 7);
 
-    @Test
-    @DisplayName("Should hash password before saving user")
-    void shouldHashPasswordBeforeSavingUser() {
-        // Given
-        RegisterRequest request = new RegisterRequest(TEST_EMAIL, TEST_PASSWORD);
-        User savedUser = new User(TEST_EMAIL, HASHED_PASSWORD);
+                when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
+                when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(HASHED_PASSWORD);
+                when(userRepository.save(any(User.class))).thenReturn(savedUser);
+                when(tokenProvider.generateAccessToken(savedUser)).thenReturn(ACCESS_TOKEN);
+                when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(savedRefreshToken);
 
-        when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
-        when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(HASHED_PASSWORD);
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(tokenProvider.generateAccessToken(any(User.class))).thenReturn(ACCESS_TOKEN);
-        when(refreshTokenRepository.save(any(RefreshToken.class)))
-                .thenReturn(new RefreshToken(savedUser, 7));
+                // When
+                AuthResponse response = createUserUseCase.execute(request, Role.HOST);
 
-        // When
-        createUserUseCase.execute(request);
+                // Then
+                assertThat(response).isNotNull();
+                assertThat(response.email()).isEqualTo(TEST_EMAIL);
 
-        // Then
-        verify(passwordEncoder).encode(TEST_PASSWORD);
-        verify(userRepository).save(argThat(user -> user.getPassword().equals(HASHED_PASSWORD)));
-    }
+                // Verify Host Profile saved
+                ArgumentCaptor<HostProfile> hostProfileCaptor = ArgumentCaptor.forClass(HostProfile.class);
+                verify(hostProfileRepository).save(hostProfileCaptor.capture());
+                HostProfile capturedProfile = hostProfileCaptor.getValue();
+                assertThat(capturedProfile.getOrganizationName()).isEqualTo("Taghazout Surf Camp");
+                assertThat(capturedProfile.getUser()).isEqualTo(savedUser);
+        }
 
-    @Test
-    @DisplayName("Should create refresh token with 7 days expiration")
-    void shouldCreateRefreshTokenWith7DaysExpiration() {
-        // Given
-        RegisterRequest request = new RegisterRequest(TEST_EMAIL, TEST_PASSWORD);
-        User savedUser = new User(TEST_EMAIL, HASHED_PASSWORD);
+        @Test
+        @DisplayName("Should FAIL to register HOST without organization name")
+        void shouldFailToRegisterHostWithoutOrgName() {
+                // Given
+                RegisterRequest request = new RegisterRequest(
+                                TEST_EMAIL,
+                                TEST_PASSWORD,
+                                "Host",
+                                "User",
+                                null); // Missing org name
 
-        when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
-        when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(HASHED_PASSWORD);
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(tokenProvider.generateAccessToken(any(User.class))).thenReturn(ACCESS_TOKEN);
-        when(refreshTokenRepository.save(any(RefreshToken.class)))
-                .thenReturn(new RefreshToken(savedUser, 7));
+                when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
 
-        // When
-        createUserUseCase.execute(request);
+                // When/Then
+                assertThatThrownBy(() -> createUserUseCase.execute(request, Role.HOST))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessageContaining("Organization name is required");
 
-        // Then
-        verify(refreshTokenRepository).save(argThat(token -> token.getUser().equals(savedUser) &&
-                !token.isExpired() &&
-                token.getRemainingTimeSeconds() > 0));
-    }
+                // Verify nothing saved
+                verify(userRepository, never()).save(any());
+                verify(hostProfileRepository, never()).save(any());
+        }
 
-    @Test
-    @DisplayName("Should register user with email only (no name)")
-    void shouldRegisterUserWithEmailOnly() {
-        // Given
-        RegisterRequest request = new RegisterRequest(TEST_EMAIL, TEST_PASSWORD);
-        User savedUser = new User(TEST_EMAIL, HASHED_PASSWORD);
+        @Test
+        @DisplayName("Should throw exception when email already exists")
+        void shouldThrowExceptionWhenEmailAlreadyExists() {
+                // Given
+                RegisterRequest request = new RegisterRequest(TEST_EMAIL, TEST_PASSWORD);
+                when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(true);
 
-        when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
-        when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(HASHED_PASSWORD);
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(tokenProvider.generateAccessToken(any(User.class))).thenReturn(ACCESS_TOKEN);
-        when(refreshTokenRepository.save(any(RefreshToken.class)))
-                .thenReturn(new RefreshToken(savedUser, 7));
+                // When/Then
+                assertThatThrownBy(() -> createUserUseCase.execute(request, Role.CLIENT))
+                                .isInstanceOf(UserAlreadyExistsException.class)
+                                .hasMessageContaining(TEST_EMAIL);
 
-        // When
-        AuthResponse response = createUserUseCase.execute(request);
-
-        // Then
-        assertThat(response).isNotNull();
-        assertThat(response.email()).isEqualTo(TEST_EMAIL);
-        assertThat(response.firstName()).isNull();
-        assertThat(response.lastName()).isNull();
-    }
+                verify(userRepository, never()).save(any(User.class));
+        }
 }

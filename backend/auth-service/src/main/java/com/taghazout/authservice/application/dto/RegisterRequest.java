@@ -30,7 +30,9 @@ public record RegisterRequest(
 
         @Size(max = 100, message = "First name must not exceed 100 characters") String firstName,
 
-        @Size(max = 100, message = "Last name must not exceed 100 characters") String lastName) {
+        @Size(max = 100, message = "Last name must not exceed 100 characters") String lastName,
+
+        String organizationName) {
     /**
      * Compact constructor for additional validation.
      * Executes before field initialization.
@@ -52,6 +54,6 @@ public record RegisterRequest(
      * Simplified constructor for email and password only.
      */
     public RegisterRequest(String email, String password) {
-        this(email, password, null, null);
+        this(email, password, null, null, null);
     }
 }

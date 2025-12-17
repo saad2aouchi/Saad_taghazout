@@ -1,5 +1,6 @@
 package com.taghazout.authservice.domain.entity;
 
+import com.taghazout.authservice.domain.enums.Role;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -47,6 +48,10 @@ public class User {
     @Column(name = "last_name", length = 100)
     private String lastName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private Role role;
+
     @Column(name = "is_enabled", nullable = false)
     private boolean enabled = true;
 
@@ -72,14 +77,19 @@ public class User {
      * 
      * @param email          user's email (must be unique)
      * @param hashedPassword BCrypt-hashed password
+     * @param role           user's role (CLIENT or HOST)
      * @throws IllegalArgumentException if email or password is null/empty
      */
-    public User(String email, String hashedPassword) {
+    public User(String email, String hashedPassword, Role role) {
         validateEmail(email);
         validatePassword(hashedPassword);
+        if (role == null) {
+            throw new IllegalArgumentException("Role cannot be null");
+        }
 
         this.email = email;
         this.password = hashedPassword;
+        this.role = role;
         this.enabled = true;
         this.locked = false;
         this.createdAt = LocalDateTime.now();
@@ -93,9 +103,10 @@ public class User {
      * @param hashedPassword BCrypt-hashed password
      * @param firstName      user's first name
      * @param lastName       user's last name
+     * @param role           user's role
      */
-    public User(String email, String hashedPassword, String firstName, String lastName) {
-        this(email, hashedPassword);
+    public User(String email, String hashedPassword, String firstName, String lastName, Role role) {
+        this(email, hashedPassword, role);
         this.firstName = firstName;
         this.lastName = lastName;
     }
@@ -222,6 +233,10 @@ public class User {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public Role getRole() {
+        return role;
     }
 
     public boolean isEnabled() {

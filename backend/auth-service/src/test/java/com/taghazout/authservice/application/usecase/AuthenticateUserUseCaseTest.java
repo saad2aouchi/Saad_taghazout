@@ -4,6 +4,7 @@ import com.taghazout.authservice.application.dto.AuthResponse;
 import com.taghazout.authservice.application.dto.LoginRequest;
 import com.taghazout.authservice.domain.entity.RefreshToken;
 import com.taghazout.authservice.domain.entity.User;
+import com.taghazout.authservice.domain.enums.Role;
 import com.taghazout.authservice.domain.exception.InvalidCredentialsException;
 import com.taghazout.authservice.domain.port.RefreshTokenRepositoryPort;
 import com.taghazout.authservice.domain.port.TokenProviderPort;
@@ -62,7 +63,7 @@ class AuthenticateUserUseCaseTest {
     void shouldSuccessfullyAuthenticateUser() {
         // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, TEST_PASSWORD);
-        User user = new User(TEST_EMAIL, HASHED_PASSWORD, "John", "Doe");
+        User user = new User(TEST_EMAIL, HASHED_PASSWORD, "John", "Doe", Role.CLIENT);
         RefreshToken refreshToken = new RefreshToken(user, 7);
 
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
@@ -107,7 +108,7 @@ class AuthenticateUserUseCaseTest {
     void shouldThrowExceptionWhenPasswordIncorrect() {
         // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, "wrongPassword");
-        User user = new User(TEST_EMAIL, HASHED_PASSWORD);
+        User user = new User(TEST_EMAIL, HASHED_PASSWORD, Role.CLIENT);
 
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongPassword", HASHED_PASSWORD)).thenReturn(false);
@@ -125,7 +126,7 @@ class AuthenticateUserUseCaseTest {
     void shouldThrowExceptionWhenUserDisabled() {
         // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, TEST_PASSWORD);
-        User user = new User(TEST_EMAIL, HASHED_PASSWORD);
+        User user = new User(TEST_EMAIL, HASHED_PASSWORD, Role.CLIENT);
         user.disable(); // Disable the user
 
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
@@ -144,7 +145,7 @@ class AuthenticateUserUseCaseTest {
     void shouldThrowExceptionWhenUserLocked() {
         // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, TEST_PASSWORD);
-        User user = new User(TEST_EMAIL, HASHED_PASSWORD);
+        User user = new User(TEST_EMAIL, HASHED_PASSWORD, Role.CLIENT);
         user.lock(); // Lock the user
 
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
@@ -163,7 +164,7 @@ class AuthenticateUserUseCaseTest {
     void shouldCreateNewRefreshTokenOnEachLogin() {
         // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, TEST_PASSWORD);
-        User user = new User(TEST_EMAIL, HASHED_PASSWORD);
+        User user = new User(TEST_EMAIL, HASHED_PASSWORD, Role.CLIENT);
 
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(TEST_PASSWORD, HASHED_PASSWORD)).thenReturn(true);
@@ -184,7 +185,7 @@ class AuthenticateUserUseCaseTest {
     void shouldUseBCryptToVerifyPassword() {
         // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, TEST_PASSWORD);
-        User user = new User(TEST_EMAIL, HASHED_PASSWORD);
+        User user = new User(TEST_EMAIL, HASHED_PASSWORD, Role.CLIENT);
 
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(TEST_PASSWORD, HASHED_PASSWORD)).thenReturn(true);

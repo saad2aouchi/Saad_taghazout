@@ -1,5 +1,6 @@
 package com.taghazout.authservice.domain.entity;
 
+import com.taghazout.authservice.domain.enums.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
@@ -23,11 +24,12 @@ class UserTest {
         @DisplayName("Should create user with valid email and password")
         void shouldCreateUserWithValidEmailAndPassword() {
             // When
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
 
             // Then
             assertThat(user.getEmail()).isEqualTo(VALID_EMAIL);
             assertThat(user.getPassword()).isEqualTo(BCRYPT_HASH);
+            assertThat(user.getRole()).isEqualTo(Role.CLIENT);
             assertThat(user.isEnabled()).isTrue();
             assertThat(user.isLocked()).isFalse();
             assertThat(user.getCreatedAt()).isNotNull();
@@ -38,18 +40,19 @@ class UserTest {
         @DisplayName("Should create user with full details")
         void shouldCreateUserWithFullDetails() {
             // When
-            User user = new User(VALID_EMAIL, BCRYPT_HASH, "John", "Doe");
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, "John", "Doe", Role.HOST);
 
             // Then
             assertThat(user.getEmail()).isEqualTo(VALID_EMAIL);
             assertThat(user.getFirstName()).isEqualTo("John");
             assertThat(user.getLastName()).isEqualTo("Doe");
+            assertThat(user.getRole()).isEqualTo(Role.HOST);
         }
 
         @Test
         @DisplayName("Should throw exception for null email")
         void shouldThrowExceptionForNullEmail() {
-            assertThatThrownBy(() -> new User(null, BCRYPT_HASH))
+            assertThatThrownBy(() -> new User(null, BCRYPT_HASH, Role.CLIENT))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Email cannot be null or empty");
         }
@@ -57,7 +60,7 @@ class UserTest {
         @Test
         @DisplayName("Should throw exception for empty email")
         void shouldThrowExceptionForEmptyEmail() {
-            assertThatThrownBy(() -> new User("", BCRYPT_HASH))
+            assertThatThrownBy(() -> new User("", BCRYPT_HASH, Role.CLIENT))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Email cannot be null or empty");
         }
@@ -65,7 +68,7 @@ class UserTest {
         @Test
         @DisplayName("Should throw exception for invalid email format")
         void shouldThrowExceptionForInvalidEmailFormat() {
-            assertThatThrownBy(() -> new User("invalid-email", BCRYPT_HASH))
+            assertThatThrownBy(() -> new User("invalid-email", BCRYPT_HASH, Role.CLIENT))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Invalid email format");
         }
@@ -73,7 +76,7 @@ class UserTest {
         @Test
         @DisplayName("Should throw exception for null password")
         void shouldThrowExceptionForNullPassword() {
-            assertThatThrownBy(() -> new User(VALID_EMAIL, null))
+            assertThatThrownBy(() -> new User(VALID_EMAIL, null, Role.CLIENT))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Password cannot be null or empty");
         }
@@ -81,9 +84,17 @@ class UserTest {
         @Test
         @DisplayName("Should throw exception for non-BCrypt password")
         void shouldThrowExceptionForNonBCryptPassword() {
-            assertThatThrownBy(() -> new User(VALID_EMAIL, "plaintext"))
+            assertThatThrownBy(() -> new User(VALID_EMAIL, "plaintext", Role.CLIENT))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Password must be BCrypt hashed");
+        }
+
+        @Test
+        @DisplayName("Should throw exception for null role")
+        void shouldThrowExceptionForNullRole() {
+            assertThatThrownBy(() -> new User(VALID_EMAIL, BCRYPT_HASH, null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Role cannot be null");
         }
     }
 
@@ -95,7 +106,7 @@ class UserTest {
         @DisplayName("Should update password")
         void shouldUpdatePassword() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
             String newHash = "$2a$12$newHashValue0123456789ABCDEFGHIJKLMNOPQRSTUV";
 
             // When
@@ -109,7 +120,7 @@ class UserTest {
         @DisplayName("Should update profile")
         void shouldUpdateProfile() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
 
             // When
             user.updateProfile("Jane", "Smith");
@@ -123,7 +134,7 @@ class UserTest {
         @DisplayName("Should lock account")
         void shouldLockAccount() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
 
             // When
             user.lock();
@@ -137,7 +148,7 @@ class UserTest {
         @DisplayName("Should unlock account")
         void shouldUnlockAccount() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
             user.lock();
 
             // When
@@ -152,7 +163,7 @@ class UserTest {
         @DisplayName("Should disable account")
         void shouldDisableAccount() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
 
             // When
             user.disable();
@@ -166,7 +177,7 @@ class UserTest {
         @DisplayName("Should enable account")
         void shouldEnableAccount() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
             user.disable();
 
             // When
@@ -181,7 +192,7 @@ class UserTest {
         @DisplayName("Should not allow authentication when locked")
         void shouldNotAllowAuthenticationWhenLocked() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
             user.lock();
 
             // Then
@@ -192,7 +203,7 @@ class UserTest {
         @DisplayName("Should not allow authentication when disabled")
         void shouldNotAllowAuthenticationWhenDisabled() {
             // Given
-            User user = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
             user.disable();
 
             // Then
@@ -208,8 +219,8 @@ class UserTest {
         @DisplayName("Should be equal based on email")
         void shouldBeEqualBasedOnEmail() {
             // Given
-            User user1 = new User(VALID_EMAIL, BCRYPT_HASH);
-            User user2 = new User(VALID_EMAIL, BCRYPT_HASH);
+            User user1 = new User(VALID_EMAIL, BCRYPT_HASH, Role.CLIENT);
+            User user2 = new User(VALID_EMAIL, BCRYPT_HASH, Role.HOST); // Role doesn't affect equality (only email)
 
             // Then
             assertThat(user1).isEqualTo(user2);
@@ -220,8 +231,8 @@ class UserTest {
         @DisplayName("Should not be equal with different emails")
         void shouldNotBeEqualWithDifferentEmails() {
             // Given
-            User user1 = new User("user1@example.com", BCRYPT_HASH);
-            User user2 = new User("user2@example.com", BCRYPT_HASH);
+            User user1 = new User("user1@example.com", BCRYPT_HASH, Role.CLIENT);
+            User user2 = new User("user2@example.com", BCRYPT_HASH, Role.CLIENT);
 
             // Then
             assertThat(user1).isNotEqualTo(user2);

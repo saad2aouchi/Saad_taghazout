@@ -132,6 +132,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles HttpMediaTypeNotSupportedException (415 Unsupported Media Type).
+     */
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupported(
+            org.springframework.web.HttpMediaTypeNotSupportedException ex) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(error);
+    }
+
+    /**
      * Handles all other exceptions (500 Internal Server Error).
      * 
      * Fallback for unexpected errors.

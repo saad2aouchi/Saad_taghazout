@@ -63,21 +63,40 @@ public class AuthController {
     }
 
     /**
-     * Register a new user.
+     * Register a new CLIENT user.
      * 
      * Creates user account, hashes password, and returns JWT tokens.
      * 
      * @param request registration request (email, password, optional name)
      * @return 201 Created with AuthResponse containing tokens
      */
-    @PostMapping("/register")
-    @Operation(summary = "Register new user", description = "Creates a new user account with email and password. Returns JWT access and refresh tokens.", responses = {
-            @ApiResponse(responseCode = "201", description = "User successfully registered", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+    @PostMapping("/register/client")
+    @Operation(summary = "Register new Client", description = "Creates a new client account. Returns JWT access and refresh tokens.", responses = {
+            @ApiResponse(responseCode = "201", description = "User successfully registered"),
             @ApiResponse(responseCode = "409", description = "Email already exists"),
-            @ApiResponse(responseCode = "400", description = "Invalid input (validation error)")
+            @ApiResponse(responseCode = "400", description = "Invalid input")
     })
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = createUserUseCase.execute(request);
+    public ResponseEntity<AuthResponse> registerClient(@Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = createUserUseCase.execute(request, com.taghazout.authservice.domain.enums.Role.CLIENT);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Register a new HOST user.
+     * 
+     * Creates user account, hashes password, and returns JWT tokens.
+     * 
+     * @param request registration request (email, password, optional name)
+     * @return 201 Created with AuthResponse containing tokens
+     */
+    @PostMapping("/register/host")
+    @Operation(summary = "Register new Host", description = "Creates a new host account. Returns JWT access and refresh tokens.", responses = {
+            @ApiResponse(responseCode = "201", description = "User successfully registered"),
+            @ApiResponse(responseCode = "409", description = "Email already exists"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    public ResponseEntity<AuthResponse> registerHost(@Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = createUserUseCase.execute(request, com.taghazout.authservice.domain.enums.Role.HOST);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
 
+import com.taghazout.authservice.domain.enums.Role;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.*;
@@ -17,7 +18,7 @@ class RefreshTokenTest {
     private static final String BCRYPT_HASH = "$2a$12$abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNO";
 
     private User createTestUser() {
-        return new User("test@example.com", BCRYPT_HASH);
+        return new User("test@example.com", BCRYPT_HASH, Role.CLIENT);
     }
 
     @Nested
@@ -161,7 +162,7 @@ class RefreshTokenTest {
         void shouldCheckIfTokenBelongsToUser() {
             // Given
             User user1 = createTestUser();
-            User user2 = new User("other@example.com", BCRYPT_HASH);
+            User user2 = new User("other@example.com", BCRYPT_HASH, Role.CLIENT);
             RefreshToken token = new RefreshToken(user1, 7);
 
             // Both users have null IDs (not persisted yet)

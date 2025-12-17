@@ -19,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.taghazout.authservice.domain.enums.Role;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -37,71 +39,104 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Auth Service Integration Tests")
 class AuthServiceIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserJpaRepository userRepository;
+        @Autowired
+        private UserJpaRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+        @Autowired
+        private PasswordEncoder passwordEncoder;
 
-    @BeforeEach
-    void setUp() {
-        // Database is cleaned automatically due to @Transactional
-    }
+        @BeforeEach
+        void setUp() {
+                // Database is cleaned automatically due to @Transactional
+        }
 
-    @Test
-    @DisplayName("Full flow: Register -> Login -> DB Verification")
-    void shouldCompleteFullAuthFlow() throws Exception {
-        // 1. Register a new user
-        RegisterRequest registerRequest = new RegisterRequest(
-                "integration@taghazout.com",
-                "securePass123",
-                "Integration",
-                "Tester");
+        @Test
+        @DisplayName("Full flow: Register -> Login -> DB Verification")
+        void shouldCompleteFullAuthFlow() throws Exception {
+                // 1. Register a new user
+                RegisterRequest registerRequest = new RegisterRequest(
+                                "integration@taghazout.com",
+                                "securePass123",
+                                "Integration",
+                                "Tester",
+                                null);
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("integration@taghazout.com"))
-                .andExpect(jsonPath("$.accessToken").exists())
-                .andExpect(jsonPath("$.refreshToken").exists());
+                mockMvc.perform(post("/api/v1/auth/register/client")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerRequest)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.email").value("integration@taghazout.com"))
+                                .andExpect(jsonPath("$.accessToken").exists())
+                                .andExpect(jsonPath("$.refreshToken").exists());
 
-        // 2. Verify User in Database
-        User savedUser = userRepository.findByEmail("integration@taghazout.com").orElseThrow();
-        assertThat(savedUser.getFirstName()).isEqualTo("Integration");
-        assertThat(passwordEncoder.matches("securePass123", savedUser.getPassword())).isTrue();
+                // 2. Verify User in Database
+                User savedUser = userRepository.findByEmail("integration@taghazout.com").orElseThrow();
+                assertThat(savedUser.getFirstName()).isEqualTo("Integration");
+                assertThat(passwordEncoder.matches("securePass123", savedUser.getPassword())).isTrue();
 
-        // 3. Login with the new user
-        LoginRequest loginRequest = new LoginRequest("integration@taghazout.com", "securePass123");
+                // 3. Login with the new user
+                LoginRequest loginRequest = new LoginRequest("integration@taghazout.com", "securePass123");
 
-        mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("integration@taghazout.com"))
-                .andExpect(jsonPath("$.accessToken").exists())
-                .andExpect(jsonPath("$.refreshToken").exists());
-    }
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginRequest)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.email").value("integration@taghazout.com"))
+                                .andExpect(jsonPath("$.accessToken").exists())
+                                .andExpect(jsonPath("$.refreshToken").exists());
 
-    @Test
-    @DisplayName("Should fail login with wrong password")
-    void shouldFailLoginWithWrongPassword() throws Exception {
-        // 1. Pre-seed user
-        User user = new User("fail@taghazout.com", passwordEncoder.encode("correctPass"));
-        userRepository.saveAndFlush(user);
+        }
 
-        // 2. Attempt login with wrong password
-        LoginRequest loginRequest = new LoginRequest("fail@taghazout.com", "wrongPass");
+        @Autowired
+        private com.taghazout.authservice.infrastructure.adapter.HostProfileJpaRepository hostProfileRepository;
 
-        mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isUnauthorized());
-    }
+        @Test
+        @DisplayName("Should register HOST and create HostProfile")
+        void shouldRegisterHostAndCreateProfile() throws Exception {
+                // 1. Register a new HOST
+                RegisterRequest registerRequest = new RegisterRequest(
+                                "host_integ@taghazout.com",
+                                "securePass123",
+                                "Host",
+                                "Integration",
+                                "Pro Surf Camp");
+
+                mockMvc.perform(post("/api/v1/auth/register/host")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerRequest)))
+                                .andExpect(status().isCreated());
+
+                // 2. Verify User and HostProfile in Database
+                User savedUser = userRepository.findByEmail("host_integ@taghazout.com").orElseThrow();
+                assertThat(savedUser.getRole()).isEqualTo(Role.HOST);
+
+                com.taghazout.authservice.domain.entity.HostProfile profile = hostProfileRepository.findAll().stream()
+                                .filter(p -> p.getUser().getId().equals(savedUser.getId()))
+                                .findFirst()
+                                .orElseThrow();
+
+                assertThat(profile.getOrganizationName()).isEqualTo("Pro Surf Camp");
+        }
+
+        @Test
+        @DisplayName("Should fail login with wrong password")
+        void shouldFailLoginWithWrongPassword() throws Exception {
+                // 1. Pre-seed user
+                User user = new User("fail@taghazout.com", passwordEncoder.encode("correctPass"), Role.CLIENT);
+                userRepository.saveAndFlush(user);
+
+                // 2. Attempt login with wrong password
+                LoginRequest loginRequest = new LoginRequest("fail@taghazout.com", "wrongPass");
+
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginRequest)))
+                                .andExpect(status().isUnauthorized());
+        }
 }

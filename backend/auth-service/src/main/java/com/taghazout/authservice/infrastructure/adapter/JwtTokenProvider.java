@@ -68,8 +68,6 @@ public class JwtTokenProvider implements TokenProviderPort {
         return generateToken(user, accessTokenExpiration);
     }
 
-
-
     @Override
     public String validateTokenAndGetEmail(String token) {
         Claims claims = extractAllClaims(token);
@@ -102,11 +100,14 @@ public class JwtTokenProvider implements TokenProviderPort {
     private String generateToken(User user, long expirationMs) {
         Map<String, Object> claims = new HashMap<>();
 
-        // Only add userId if user has been persisted (ID is not null)
         if (user.getId() != null) {
             claims.put("userId", user.getId());
         }
         claims.put("email", user.getEmail());
+        // Add role claim
+        if (user.getRole() != null) {
+            claims.put("role", user.getRole().name());
+        }
 
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationMs);
