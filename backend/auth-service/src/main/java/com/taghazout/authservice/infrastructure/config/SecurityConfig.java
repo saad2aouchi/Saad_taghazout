@@ -10,8 +10,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Security Configuration for Auth Service
@@ -80,6 +84,9 @@ public class SecurityConfig {
                 // Safe for stateless JWT authentication (no cookies)
                 .csrf(AbstractHttpConfigurer::disable)
 
+                // === CORS Configuration ===
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // === Session Management ===
                 // Stateless - no HttpSession created or used
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -133,6 +140,31 @@ public class SecurityConfig {
     }
 
     /**
+     * CORS configuration source for local development and production.
+     * Allows Flutter web app origins.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Allow all origins for development/standalone
+        if (isDevelopmentProfile()) {
+            configuration.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            // Add specific origins for production
+            configuration.setAllowedOrigins(List.of("http://localhost:54793", "http://localhost:8080"));
+        }
+        
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-auth-token", "RefreshToken"));
+        configuration.setExposedHeaders(List.of("x-auth-token"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    /**
      * Checks if application is running in development profile.
      * 
      * @return true if 'dev' or 'development' profile is active
@@ -140,6 +172,7 @@ public class SecurityConfig {
     private boolean isDevelopmentProfile() {
         String[] activeProfiles = environment.getActiveProfiles();
         return Arrays.asList(activeProfiles).contains("dev")
-                || Arrays.asList(activeProfiles).contains("development");
+                || Arrays.asList(activeProfiles).contains("development")
+                || Arrays.asList(activeProfiles).contains("standalone");
     }
 }
