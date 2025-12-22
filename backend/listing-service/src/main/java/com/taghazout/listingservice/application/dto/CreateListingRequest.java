@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 @Data
 @NoArgsConstructor
 public class CreateListingRequest {
+    private Long hostId;
     private ListingType type;
     private HostelDetailsRequest hostelDetails;
 

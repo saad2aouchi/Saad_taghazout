@@ -12,12 +12,14 @@ import java.util.UUID;
 @Builder(toBuilder = true)
 public class Listing {
     private final UUID id;
+    private final Long hostId;
     private final ListingType type;
     private final HostelDetails hostelDetails;
     private final LocalDateTime createdAt;
 
-    public Listing(UUID id, ListingType type, HostelDetails hostelDetails, LocalDateTime createdAt) {
+    public Listing(UUID id, Long hostId, ListingType type, HostelDetails hostelDetails, LocalDateTime createdAt) {
         this.id = id;
+        this.hostId = hostId;
         this.type = type;
         this.hostelDetails = hostelDetails;
         this.createdAt = createdAt;

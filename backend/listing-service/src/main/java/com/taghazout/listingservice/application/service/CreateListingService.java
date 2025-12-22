@@ -20,6 +20,7 @@ public class CreateListingService {
     public Listing execute(CreateListingRequest request) {
         Listing listing = Listing.builder()
                 .id(UUID.randomUUID())
+                .hostId(request.getHostId())
                 .type(request.getType())
                 .hostelDetails(request.toHostelDetailsDomain())
                 .createdAt(LocalDateTime.now())

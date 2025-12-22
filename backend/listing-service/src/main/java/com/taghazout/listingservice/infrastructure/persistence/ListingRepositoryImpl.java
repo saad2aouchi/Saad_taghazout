@@ -39,6 +39,13 @@ public class ListingRepositoryImpl implements ListingRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Listing> findByHostId(Long hostId) {
+        return jpaRepository.findByHostId(hostId).stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
+    }
+
     private ListingJpaEntity mapToEntity(Listing listing) {
         String detailsJson = null;
         if (listing.getHostelDetails() != null) {
@@ -51,6 +58,7 @@ public class ListingRepositoryImpl implements ListingRepository {
 
         return ListingJpaEntity.builder()
                 .id(listing.getId())
+                .hostId(listing.getHostId())
                 .type(listing.getType())
                 .createdAt(listing.getCreatedAt())
                 .hostelDetailsJson(detailsJson)
@@ -69,7 +77,8 @@ public class ListingRepositoryImpl implements ListingRepository {
 
         return new Listing(
                 entity.getId(),
-                entity.getType(),
+                entity.getHostId(),
+                type,
                 details,
                 entity.getCreatedAt());
     }

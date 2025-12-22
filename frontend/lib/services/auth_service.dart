@@ -15,6 +15,8 @@ class AuthService {
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
   static const _userEmailKey = 'user_email';
+  static const _userIdKey = 'user_id';
+  static const _userRoleKey = 'user_role';
 
   /// Login with email and password.
   /// 
@@ -110,6 +112,12 @@ class AuthService {
     await _storage.write(key: _accessTokenKey, value: response.accessToken);
     await _storage.write(key: _refreshTokenKey, value: response.refreshToken);
     await _storage.write(key: _userEmailKey, value: response.email);
+    if (response.userId != null) {
+      await _storage.write(key: _userIdKey, value: response.userId.toString());
+    }
+    if (response.role != null) {
+      await _storage.write(key: _userRoleKey, value: response.role);
+    }
   }
 
   /// Get stored access token.
@@ -120,6 +128,16 @@ class AuthService {
   /// Get stored user email.
   static Future<String?> getUserEmail() async {
     return await _storage.read(key: _userEmailKey);
+  }
+
+  /// Get stored user ID.
+  static Future<String?> getUserId() async {
+    return await _storage.read(key: _userIdKey);
+  }
+
+  /// Get stored user role.
+  static Future<String?> getUserRole() async {
+    return await _storage.read(key: _userRoleKey);
   }
 
   /// Clear stored tokens (logout).

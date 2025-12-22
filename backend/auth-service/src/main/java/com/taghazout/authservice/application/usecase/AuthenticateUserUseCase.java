@@ -108,10 +108,12 @@ public class AuthenticateUserUseCase {
 
         // Step 6: Build and return response
         return AuthResponse.of(
+                user.getId(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
                 accessToken,
-                savedRefreshToken.getToken());
+                savedRefreshToken.getToken(),
+                user.getRole().name());
     }
 }

@@ -21,6 +21,8 @@ public class ListingJpaEntity {
     @Id
     private UUID id;
 
+    private Long hostId;
+
     @Enumerated(EnumType.STRING)
     private ListingType type;
 
@@ -48,6 +50,7 @@ public class ListingJpaEntity {
     public static ListingJpaEntity fromDomain(Listing listing) {
         return ListingJpaEntity.builder()
                 .id(listing.getId())
+                .hostId(listing.getHostId())
                 .type(listing.getType())
                 .createdAt(listing.getCreatedAt())
                 // In a real app, use ObjectMapper to serialize listing.getHostelDetails() to
@@ -58,7 +61,7 @@ public class ListingJpaEntity {
 
     public Listing toDomain() {
         // Reverse mapping... simplistic for MVP to verify structure
-        return new Listing(id, type, null, createdAt);
+        return new Listing(id, hostId, type, null, createdAt);
         // TODO: Implement JSON deserialization for full fidelity
     }
 }

@@ -11,6 +11,8 @@ public interface ListingRepository {
     Optional<Listing> findById(UUID id);
 
     List<Listing> findAll();
+
+    List<Listing> findByHostId(Long hostId);
     // This is a port (interface) in the Domain layer.
     // Implementation belongs in Infrastructure.
 }

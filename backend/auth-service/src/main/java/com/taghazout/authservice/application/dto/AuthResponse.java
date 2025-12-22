@@ -37,7 +37,11 @@ public record AuthResponse(
 
         @JsonProperty("accessToken") String accessToken,
 
-        @JsonProperty("refreshToken") String refreshToken) {
+        @JsonProperty("refreshToken") String refreshToken,
+
+        @JsonProperty("userId") Long userId,
+
+        @JsonProperty("role") String role) {
     /**
      * Compact constructor for validation.
      */
@@ -51,20 +55,23 @@ public record AuthResponse(
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new IllegalArgumentException("Refresh token cannot be null or blank");
         }
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
     }
 
     /**
      * Factory method for creating response from tokens and user data.
      */
-    public static AuthResponse of(String email, String firstName, String lastName,
-            String accessToken, String refreshToken) {
-        return new AuthResponse(email, firstName, lastName, accessToken, refreshToken);
+    public static AuthResponse of(Long userId, String email, String firstName, String lastName,
+            String accessToken, String refreshToken, String role) {
+        return new AuthResponse(email, firstName, lastName, accessToken, refreshToken, userId, role);
     }
 
     /**
      * Factory method for creating response from tokens and email only.
      */
-    public static AuthResponse of(String email, String accessToken, String refreshToken) {
-        return new AuthResponse(email, null, null, accessToken, refreshToken);
+    public static AuthResponse of(Long userId, String email, String accessToken, String refreshToken, String role) {
+        return new AuthResponse(email, null, null, accessToken, refreshToken, userId, role);
     }
 }

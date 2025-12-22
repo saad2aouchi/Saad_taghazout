@@ -6,14 +6,18 @@ class AuthResponse {
   final String? firstName;
   final String? lastName;
   final String accessToken;
-  final String refreshToken;
+  final String? refreshToken;
+  final String role; // New field
+  final int? userId;
 
   AuthResponse({
     required this.email,
     this.firstName,
     this.lastName,
     required this.accessToken,
-    required this.refreshToken,
+    this.refreshToken,
+    required this.role,
+    this.userId,
   });
 
   /// Factory constructor to create AuthResponse from JSON.
@@ -23,7 +27,9 @@ class AuthResponse {
       firstName: json['firstName'] as String?,
       lastName: json['lastName'] as String?,
       accessToken: json['accessToken'] as String,
-      refreshToken: json['refreshToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
+      role: json['role'] as String? ?? 'CLIENT', // Default to CLIENT if missing (backward compatibility)
+      userId: json['userId'] as int?,
     );
   }
 
@@ -35,6 +41,7 @@ class AuthResponse {
       'lastName': lastName,
       'accessToken': accessToken,
       'refreshToken': refreshToken,
+      'role': role,
     };
   }
 }
