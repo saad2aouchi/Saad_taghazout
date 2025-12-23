@@ -78,7 +78,7 @@ public class ListingRepositoryImpl implements ListingRepository {
         return new Listing(
                 entity.getId(),
                 entity.getHostId(),
-                type,
+                entity.getType(),
                 details,
                 entity.getCreatedAt());
     }

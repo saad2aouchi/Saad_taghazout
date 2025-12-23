@@ -1,24 +1,22 @@
-version: '3.8'
-
 services:
   # Spring Cloud Infrastructure
   eureka-server:
-    image: openjdk:17-jdk-slim
+    image: eclipse-temurin:17-jdk-jammy
     ports:
       - "8762:8762"
     volumes:
-      - ./eureka-server:/app
+      - ./backend/eureka-server:/app
     working_dir: /app
     command: ./mvnw spring-boot:run
     environment:
       - SPRING_PROFILES_ACTIVE=docker
 
   config-server:
-    image: openjdk:17-jdk-slim
+    image: eclipse-temurin:17-jdk-jammy
     ports:
       - "8899:8899"
     volumes:
-      - ./config-server:/app
+      - ./backend/config-server:/app
     working_dir: /app
     command: ./mvnw spring-boot:run
     environment:
@@ -26,11 +24,11 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
 
   api-gateway:
-    image: openjdk:17-jdk-slim
+    image: eclipse-temurin:17-jdk-jammy
     ports:
       - "8080:8080"
     volumes:
-      - ./api-gateway:/app
+      - ./backend/api-gateway:/app
     working_dir: /app
     command: ./mvnw spring-boot:run
     environment:
@@ -42,11 +40,11 @@ services:
 
   # Auth Service (you'll need this for JWT)
   auth-service:
-    image: openjdk:17-jdk-slim
+    image: eclipse-temurin:17-jdk-jammy
     ports:
       - "8090:8090"
     volumes:
-      - ./auth-service:/app
+      - ./backend/auth-service:/app
     working_dir: /app
     command: ./mvnw spring-boot:run
     environment:
@@ -79,11 +77,11 @@ services:
     working_dir: /app
     command: flutter run -d web-server --web-port 52903
 
-# Redis
-redis:
-  image: redis:7-alpine
-  ports:
-    - "6379:6379"
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
 
-#volumes:
-#  postgres_data:
+volumes:
+  postgres_data:

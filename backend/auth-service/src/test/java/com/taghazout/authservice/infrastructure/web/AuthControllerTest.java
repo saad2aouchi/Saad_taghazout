@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -41,10 +41,10 @@ class AuthControllerTest {
         @Autowired
         private ObjectMapper objectMapper;
 
-        @MockBean
+        @MockitoBean
         private CreateUserUseCase createUserUseCase;
 
-        @MockBean
+        @MockitoBean
         private AuthenticateUserUseCase authenticateUserUseCase;
 
         @Nested
@@ -63,11 +63,13 @@ class AuthControllerTest {
                                         null);
 
                         AuthResponse response = AuthResponse.of(
+                                        1L,
                                         "client@example.com",
                                         "John",
                                         "Client",
                                         "access.token.here",
-                                        "refresh-token-uuid");
+                                        "refresh-token-uuid",
+                                        "CLIENT");
 
                         when(createUserUseCase.execute(any(RegisterRequest.class), eq(Role.CLIENT)))
                                         .thenReturn(response);
@@ -120,11 +122,13 @@ class AuthControllerTest {
                                         "Taghazout Camp");
 
                         AuthResponse response = AuthResponse.of(
+                                        1L,
                                         "host@example.com",
                                         "Jane",
                                         "Host",
                                         "access.token.here",
-                                        "refresh-token-uuid");
+                                        "refresh-token-uuid",
+                                        "HOST");
 
                         when(createUserUseCase.execute(any(RegisterRequest.class), eq(Role.HOST))).thenReturn(response);
 
@@ -167,11 +171,13 @@ class AuthControllerTest {
                         LoginRequest request = new LoginRequest("test@example.com", "password123");
 
                         AuthResponse response = AuthResponse.of(
+                                        1L,
                                         "test@example.com",
                                         "John",
                                         "Doe",
                                         "access.token.here",
-                                        "refresh-token-uuid");
+                                        "refresh-token-uuid",
+                                        "CLIENT");
 
                         when(authenticateUserUseCase.execute(any(LoginRequest.class))).thenReturn(response);
 
@@ -275,9 +281,11 @@ class AuthControllerTest {
                         LoginRequest request = new LoginRequest("TEST@EXAMPLE.COM", "password123");
 
                         AuthResponse response = AuthResponse.of(
+                                        1L,
                                         "test@example.com",
                                         "access.token",
-                                        "refresh.token");
+                                        "refresh.token",
+                                        "CLIENT");
 
                         when(authenticateUserUseCase.execute(any(LoginRequest.class))).thenReturn(response);
 
@@ -312,7 +320,7 @@ class AuthControllerTest {
                 void shouldAcceptApplicationJson() throws Exception {
                         // Given
                         RegisterRequest request = new RegisterRequest("test@example.com", "password123");
-                        AuthResponse response = AuthResponse.of("test@example.com", "at", "rt");
+                        AuthResponse response = AuthResponse.of(1L, "test@example.com", "at", "rt", "CLIENT");
 
                         when(createUserUseCase.execute(any(), any())).thenReturn(response);
 
