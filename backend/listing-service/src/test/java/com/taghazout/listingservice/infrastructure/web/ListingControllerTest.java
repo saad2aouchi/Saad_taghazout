@@ -48,7 +48,7 @@ class ListingControllerTest {
         CreateListingRequest request = new CreateListingRequest();
         request.setType(ListingType.ACTIVITY);
 
-        Listing listing = new Listing(UUID.randomUUID(), ListingType.ACTIVITY, null, LocalDateTime.now());
+        Listing listing = new Listing(UUID.randomUUID(), 1L, ListingType.ACTIVITY, null, LocalDateTime.now());
 
         when(createListingService.execute(any(CreateListingRequest.class))).thenReturn(listing);
 

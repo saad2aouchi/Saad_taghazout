@@ -7,5 +7,8 @@ public enum Amenity {
     BREAKFAST_INCLUDED,
     LOCKER,
     LAUNDRY,
-    AIRPORT_SHUTTLE
+    AIRPORT_SHUTTLE,
+    PARKING,
+    POOL,
+    GYM
 }

@@ -115,6 +115,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid input (validation error)")
     })
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        System.out.println("DEBUG: Login request received for email: " + request.email());
         AuthResponse response = authenticateUserUseCase.execute(request);
         return ResponseEntity.ok(response);
     }

@@ -20,8 +20,10 @@ services:
     working_dir: /app
     command: ./mvnw spring-boot:run
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=native,docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
+    depends_on:
+      - eureka-server
 
   api-gateway:
     image: eclipse-temurin:17-jdk-jammy
@@ -33,12 +35,13 @@ services:
     command: ./mvnw spring-boot:run
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
     depends_on:
       - eureka-server
       - config-server
 
-  # Auth Service (you'll need this for JWT)
+  # Auth Service
   auth-service:
     image: eclipse-temurin:17-jdk-jammy
     ports:
@@ -49,6 +52,29 @@ services:
     command: ./mvnw spring-boot:run
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_HOST=config-server
+      - EUREKA_SERVER_HOST=eureka-server
+      - POSTGRES_HOST=postgres
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
+    depends_on:
+      - eureka-server
+      - config-server
+      - postgres
+
+  # Listing Service
+  listing-service:
+    image: eclipse-temurin:17-jdk-jammy
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./backend/listing-service:/app
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_HOST=config-server
+      - EUREKA_SERVER_HOST=eureka-server
+      - POSTGRES_HOST=postgres
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8762/eureka
     depends_on:
       - eureka-server
@@ -67,15 +93,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Flutter development (optional, for web testing)
   flutter-web:
-    image: cirrusci/flutter:stable
+    build: ./frontend
     ports:
-      - "52903:52903"
-    volumes:
-      - ./frontend:/app
-    working_dir: /app
-    command: flutter run -d web-server --web-port 52903
+      - "52903:80"
 
   # Redis
   redis:

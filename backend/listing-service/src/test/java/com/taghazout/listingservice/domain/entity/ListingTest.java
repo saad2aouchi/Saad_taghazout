@@ -18,10 +18,10 @@ class ListingTest {
 
         Listing listing = new Listing(
                 UUID.randomUUID(),
+                1L,
                 ListingType.HOSTEL,
                 details,
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
 
         assertNotNull(listing);
         assertEquals(ListingType.HOSTEL, listing.getType());
@@ -33,10 +33,10 @@ class ListingTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             new Listing(
                     UUID.randomUUID(),
+                    1L,
                     ListingType.HOSTEL,
                     null,
-                    LocalDateTime.now()
-            );
+                    LocalDateTime.now());
         });
 
         assertEquals("Hostel details are required for HOSTEL listing type", exception.getMessage());
@@ -46,10 +46,10 @@ class ListingTest {
     void shouldCreateActivityListingWithoutHostelDetails() {
         Listing listing = new Listing(
                 UUID.randomUUID(),
+                1L,
                 ListingType.ACTIVITY,
                 null,
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
 
         assertNotNull(listing);
         assertEquals(ListingType.ACTIVITY, listing.getType());

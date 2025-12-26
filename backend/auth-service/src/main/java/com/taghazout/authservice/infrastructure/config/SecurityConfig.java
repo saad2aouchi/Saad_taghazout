@@ -151,14 +151,14 @@ public class SecurityConfig {
             configuration.setAllowedOriginPatterns(List.of("*"));
         } else {
             // Add specific origins for production
-            configuration.setAllowedOrigins(List.of("http://localhost:54793", "http://localhost:8080"));
+            configuration.setAllowedOrigins(List.of("http://localhost:52903", "http://localhost:8080"));
         }
-        
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-auth-token", "RefreshToken"));
         configuration.setExposedHeaders(List.of("x-auth-token"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -167,12 +167,14 @@ public class SecurityConfig {
     /**
      * Checks if application is running in development profile.
      * 
-     * @return true if 'dev' or 'development' profile is active
+     * @return true if 'dev', 'development', 'docker', or 'standalone' profile is
+     *         active
      */
     private boolean isDevelopmentProfile() {
         String[] activeProfiles = environment.getActiveProfiles();
         return Arrays.asList(activeProfiles).contains("dev")
                 || Arrays.asList(activeProfiles).contains("development")
+                || Arrays.asList(activeProfiles).contains("docker")
                 || Arrays.asList(activeProfiles).contains("standalone");
     }
 }

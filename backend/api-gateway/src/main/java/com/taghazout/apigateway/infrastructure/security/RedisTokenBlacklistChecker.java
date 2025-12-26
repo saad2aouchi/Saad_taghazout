@@ -1,6 +1,5 @@
 package com.taghazout.apigateway.infrastructure.security;
 
-
 import com.taghazout.apigateway.domain.service.TokenBlacklist;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,8 @@ public class RedisTokenBlacklistChecker implements TokenBlacklist {
         try {
             return Boolean.TRUE.equals(redis.hasKey(PREFIX + token));
         } catch (Exception e) {
-            // Log error and fail secure
+            System.err.println("🔴 REDIS ERROR in TokenBlacklist: " + e.getMessage());
+            e.printStackTrace();
             return true; // If we can't check, assume revoked
         }
     }
