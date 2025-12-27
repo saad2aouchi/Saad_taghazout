@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
 import 'forgot_password.dart';
-import 'home_screen.dart';
+import 'home_screen_host.dart';
+import 'home_screen_client.dart';
 import 'services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,16 +31,25 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService.login(
+      final response = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        // Direct routing based on verified role from backend response
+        // Handles "HOST", "host", "UserRole.host" robustly
+        if (response.role.toString().toUpperCase().contains('HOST')) {
+           Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HostHomeScreen(role: response.role)),
+          );
+        } else {
+           Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ClientHomeScreen(role: response.role)),
+          );
+        }
       }
     } on AuthException catch (e) {
       if (mounted) {

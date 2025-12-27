@@ -77,7 +77,7 @@ class HostelDetails {
       'rating': rating.toJson(),
       'amenities': amenities.map((e) => e.toString().split('.').last).toList(),
       'availability': availability.toJson(),
-      'images': images, // Backend expects List<String> in request
+      'images': images.map((url) => {'url': url}).toList(), // Backend expects List<ImageUrl> objects
     };
   }
 }

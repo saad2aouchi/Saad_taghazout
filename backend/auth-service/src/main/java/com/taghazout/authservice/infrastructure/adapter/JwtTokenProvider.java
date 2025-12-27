@@ -71,7 +71,7 @@ public class JwtTokenProvider implements TokenProviderPort {
     @Override
     public String validateTokenAndGetEmail(String token) {
         Claims claims = extractAllClaims(token);
-        return claims.getSubject(); // Subject is the email
+        return claims.get("email", String.class);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class JwtTokenProvider implements TokenProviderPort {
         claims.put("email", user.getEmail());
         // Add role claim
         if (user.getRole() != null) {
-            claims.put("role", user.getRole().name());
+            claims.put("roles", user.getRole().name());
         }
 
         Date now = new Date();
@@ -114,7 +114,7 @@ public class JwtTokenProvider implements TokenProviderPort {
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(user.getEmail()) // Subject claim
+                .subject(user.getId().toString()) // Subject claim is now userId
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey, Jwts.SIG.HS256) // Explicitly use HS256

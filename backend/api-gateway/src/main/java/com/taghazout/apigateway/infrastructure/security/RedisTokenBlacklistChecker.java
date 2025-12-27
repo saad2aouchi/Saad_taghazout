@@ -26,8 +26,8 @@ public class RedisTokenBlacklistChecker implements TokenBlacklist {
             return Boolean.TRUE.equals(redis.hasKey(PREFIX + token));
         } catch (Exception e) {
             System.err.println("🔴 REDIS ERROR in TokenBlacklist: " + e.getMessage());
-            e.printStackTrace();
-            return true; // If we can't check, assume revoked
+            // e.printStackTrace();
+            return false; // Fail-open: if Redis is down, assume token is NOT blacklisted
         }
     }
 

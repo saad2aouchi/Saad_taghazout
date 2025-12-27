@@ -7,7 +7,8 @@ import '../services/auth_service.dart';
 import '../models/listing.dart';
 
 class HostHomeScreen extends StatefulWidget {
-  const HostHomeScreen({super.key});
+  final String? role;
+  const HostHomeScreen({super.key, this.role});
 
   @override
   State<HostHomeScreen> createState() => _HostHomeScreenState();
@@ -53,9 +54,17 @@ class _HostHomeScreenState extends State<HostHomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          "HOST DASHBOARD",
-          style: TextStyle(color: Color(0xFFD35400), fontWeight: FontWeight.bold, letterSpacing: 1),
+        title: Column(
+          children: [
+            const Text(
+              "HOST DASHBOARD",
+              style: TextStyle(color: Color(0xFFD35400), fontWeight: FontWeight.bold, letterSpacing: 1),
+            ),
+            Text(
+              "Role: ${widget.role ?? 'Unknown'}",
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [

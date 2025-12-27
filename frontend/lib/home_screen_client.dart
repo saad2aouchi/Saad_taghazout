@@ -5,7 +5,8 @@ import '../services/listing_service.dart';
 import '../models/listing.dart';
 
 class ClientHomeScreen extends StatefulWidget {
-  const ClientHomeScreen({super.key});
+  final String? role;
+  const ClientHomeScreen({super.key, this.role});
 
   @override
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
@@ -46,14 +47,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          "EXPLORE TAGHAZOUT",
-          style: TextStyle(
-            color: Color(0xFFD35400), 
-            fontWeight: FontWeight.bold, 
-            letterSpacing: 2,
-            fontSize: 18,
-          ),
+        title: Column(
+          children: [
+            const Text(
+              "EXPLORE TAGHAZOUT",
+              style: TextStyle(
+                color: Color(0xFFD35400), 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 2,
+                fontSize: 18,
+              ),
+            ),
+            Text(
+              "Role: ${widget.role ?? 'Unknown'}",
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [

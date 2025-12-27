@@ -85,7 +85,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
 
                 // === CORS Configuration ===
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Only apply CORS when running standalone (not behind API Gateway)
+                // When behind the gateway, the gateway handles all CORS
+                .cors(cors -> {
+                    if (isRunningBehindGateway()) {
+                        cors.disable();
+                    } else {
+                        cors.configurationSource(corsConfigurationSource());
+                    }
+                })
 
                 // === Session Management ===
                 // Stateless - no HttpSession created or used
@@ -176,5 +184,18 @@ public class SecurityConfig {
                 || Arrays.asList(activeProfiles).contains("development")
                 || Arrays.asList(activeProfiles).contains("docker")
                 || Arrays.asList(activeProfiles).contains("standalone");
+    }
+
+    /**
+     * Checks if application is running behind the API Gateway.
+     * When running behind the gateway, CORS should be disabled here
+     * since the gateway handles all CORS configuration.
+     * 
+     * @return true if 'docker' profile is active (indicates running in Docker
+     *         behind gateway)
+     */
+    private boolean isRunningBehindGateway() {
+        String[] activeProfiles = environment.getActiveProfiles();
+        return Arrays.asList(activeProfiles).contains("docker");
     }
 }

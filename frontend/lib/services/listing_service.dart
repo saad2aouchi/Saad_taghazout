@@ -8,7 +8,7 @@ class ListingService {
   final _storage = const FlutterSecureStorage();
 
   Future<Listing> createListing(Listing listing) async {
-    final token = await _storage.read(key: 'accessToken');
+    final token = await _storage.read(key: 'access_token');
     
     // Note: If Listing Service is unsecured (no JWT check), token might be ignored by backend,
     // but sending it is good practice if security is enabled later.
@@ -29,12 +29,16 @@ class ListingService {
   }
 
   Future<List<Listing>> getListings({String? hostId}) async {
+    final token = await _storage.read(key: 'access_token');
     final uri = Uri.parse(ApiConfig.listingsUrl).replace(
         queryParameters: hostId != null ? {'hostId': hostId} : null);
 
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {

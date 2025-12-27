@@ -7,8 +7,8 @@ class ApiConfig {
   /// For standalone testing without Docker, use auth-service directly on port 8090.
   
   /// API version prefix.
-  static const String baseUrl = 'http://127.0.0.1:8080/api/v1'; // API Gateway (Auth prefix)
-  static const String listingBaseUrl = 'http://127.0.0.1:8080/api/v1'; // API Gateway (Listings prefix)
+  static const String baseUrl = 'http://localhost:8080/api/v1'; // API Gateway (Auth prefix)
+  static const String listingBaseUrl = 'http://localhost:8080/api/v1'; // API Gateway (Listings prefix)
 
   // Auth Endpoints
   static const String login = '/auth/login';

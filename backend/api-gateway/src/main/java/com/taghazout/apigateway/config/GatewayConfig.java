@@ -23,16 +23,19 @@ public class GatewayConfig {
                                 .route("auth-service", r -> r.path("/api/v1/auth/**")
                                                 .uri("lb://auth-service")) // ← "lb://" = Load balance via Eureka
 
-                                // Route 2: All /listings/** requests → LISTING-SERVICE
-                                // === Secured Routes (JWT Required) ===
-                                .route("listing-service", r -> r.path("/api/v1/listings/**")
-                                                .filters(f -> f.filter(jwtAuthenticationFilter
-                                                                .apply(JwtAuthenticationFilter.Config::new))) // ✅
-                                                                                                              // ATTACH
-                                                                                                              // FILTER
+                                // Route 2: Listing Service - Public GET
+                                .route("listing-service-public", r -> r.path("/api/v1/listings/**")
+                                                .and().method("GET")
                                                 .uri("lb://listing-service"))
 
-                                // Route 3: All /bookings/** requests → BOOKING-SERVICE
+                                // Route 3: Listing Service - Secured Others
+                                .route("listing-service-secured", r -> r.path("/api/v1/listings/**")
+                                                .and().method("POST", "PUT", "DELETE", "PATCH")
+                                                .filters(f -> f.filter(jwtAuthenticationFilter
+                                                                .apply(JwtAuthenticationFilter.Config::new)))
+                                                .uri("lb://listing-service"))
+
+                                // Route 4: All /bookings/** requests → BOOKING-SERVICE
                                 .route("booking-service", r -> r.path("/api/v1/bookings/**")
                                                 .filters(f -> f.filter(jwtAuthenticationFilter
                                                                 .apply(JwtAuthenticationFilter.Config::new))) // ✅
